@@ -12,9 +12,9 @@
   "app": {
     "windows": [
       {
-        "title": "setui",
-        "width": 800,
-        "height": 600
+        "title": "SetUI",
+        "width": 1340,
+        "height": 768
       }
     ],
     "security": {
