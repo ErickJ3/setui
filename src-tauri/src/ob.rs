@@ -3,14 +3,14 @@ use serde::{Deserialize, Serialize};
 use crate::sqlite::Entity;
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Connections {
-    id: i64,
-    uri_connection: String,
-    name: String,
-    color: String,
+pub struct Connection {
+    pub id: i64,
+    pub uri_connection: String,
+    pub name: String,
+    pub color: String,
 }
 
-impl Entity for Connections {
+impl Entity for Connection {
     fn get_table_name() -> String {
         String::from("connections")
     }

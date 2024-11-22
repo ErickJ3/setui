@@ -1,10 +1,11 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
+use ob::Connection;
 use sqlite::SqliteManager;
 use tauri::Manager;
 
-mod sqlite;
 mod ob;
+mod sqlite;
 
 #[derive(Default)]
 struct AppState {
@@ -12,10 +13,35 @@ struct AppState {
 }
 
 #[tauri::command]
-fn greet(name: &str, app_handle: tauri::AppHandle) -> String {
-    let state = app_handle.state::<AppState>();
+fn create_connection(
+    app_handler: tauri::AppHandle,
+    uri: String,
+    name: String,
+    color: String,
+) -> Result<i64, String> {
+    let state = app_handler.state::<AppState>();
 
-    format!("Hello, {}! You've been greeted from Rust!", "erick")
+    let connection = Connection {
+        id: 0,
+        uri_connection: uri,
+        name,
+        color,
+    };
+
+    state
+        .sqlite_manager
+        .insert(&connection)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_connection(app_handler: tauri::AppHandle, id: i64) -> Result<Option<Connection>, String> {
+    let state = app_handler.state::<AppState>();
+
+    state
+        .sqlite_manager
+        .get_by_id(id)
+        .map_err(|e| e.to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -25,7 +51,7 @@ pub fn run() {
             sqlite_manager: SqliteManager::new().unwrap(),
         })
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![create_connection, get_connection])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
