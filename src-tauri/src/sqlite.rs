@@ -105,3 +105,122 @@ impl SqliteManager {
         Ok(entities)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+    use serial_test::serial;
+    use std::fs;
+
+    #[derive(Debug, Serialize, Deserialize, PartialEq)]
+    struct TestEntity {
+        id: i64,
+        name: String,
+    }
+
+    impl Entity for TestEntity {
+        fn get_table_name() -> String {
+            "test_entities".to_string()
+        }
+
+        fn get_id(&self) -> i64 {
+            self.id
+        }
+
+        fn get_create_table_sql() -> String {
+            "CREATE TABLE IF NOT EXISTS test_entities (id INTEGER PRIMARY KEY, data TEXT NOT NULL)"
+                .to_string()
+        }
+    }
+
+    fn setup() -> SqliteManager {
+        let test_dir = "./test_db";
+        let _ = fs::remove_dir_all(test_dir);
+        fs::create_dir_all(test_dir).unwrap();
+
+        let db_path = format!("{}/test.db", test_dir);
+
+        let manager = SqliteManager { path: db_path };
+        manager.init_table::<TestEntity>().unwrap();
+        manager
+    }
+
+    fn cleanup() {
+        let _ = fs::remove_dir_all("./test_db");
+    }
+
+    #[test]
+    #[serial]
+    fn crud_operations() {
+        let manager = setup();
+
+        let entity = TestEntity {
+            id: 0,
+            name: "Test Entity".to_string(),
+        };
+        let id = manager.insert(&entity).unwrap();
+        assert!(id > 0);
+
+        let retrieved = manager.get_by_id::<TestEntity>(id).unwrap().unwrap();
+        assert_eq!(retrieved.name, "Test Entity");
+
+        let updated_entity = TestEntity {
+            id,
+            name: "Updated Entity".to_string(),
+        };
+        manager.update(&updated_entity).unwrap();
+        let retrieved = manager.get_by_id::<TestEntity>(id).unwrap().unwrap();
+        assert_eq!(retrieved.name, "Updated Entity");
+
+        let entities = manager.list::<TestEntity>().unwrap();
+        assert_eq!(entities.len(), 1);
+        assert_eq!(entities[0].name, "Updated Entity");
+
+        manager.delete::<TestEntity>(id).unwrap();
+        assert!(manager.get_by_id::<TestEntity>(id).unwrap().is_none());
+
+        cleanup();
+    }
+
+    #[test]
+    #[serial]
+    fn get_nonexistent() {
+        let manager = setup();
+        assert!(manager.get_by_id::<TestEntity>(999).unwrap().is_none());
+        cleanup();
+    }
+
+    #[test]
+    #[serial]
+    fn multiple_entities() {
+        let manager = setup();
+
+        let entities = vec![
+            TestEntity {
+                id: 0,
+                name: "First".to_string(),
+            },
+            TestEntity {
+                id: 0,
+                name: "Second".to_string(),
+            },
+        ];
+
+        for entity in entities {
+            manager.insert(&entity).unwrap();
+        }
+
+        let list = manager.list::<TestEntity>().unwrap();
+        assert_eq!(list.len(), 2);
+        cleanup();
+    }
+
+    #[test]
+    #[serial]
+    fn init_table() {
+        let manager = setup();
+        assert!(manager.init_table::<TestEntity>().is_ok());
+        cleanup();
+    }
+}

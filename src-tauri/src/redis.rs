@@ -126,3 +126,136 @@ impl RedisManager {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serial_test::serial;
+
+    const TEST_REDIS_URI: &str = "redis://127.0.0.1:6379/";
+    const TEST_ID: i64 = 1;
+
+    fn setup() -> RedisManager {
+        let mut manager = RedisManager::new();
+        manager.connect(TEST_ID, TEST_REDIS_URI).unwrap();
+        manager
+    }
+
+    fn cleanup(manager: &RedisManager) {
+        if let Some(client) = manager.get_client(TEST_ID) {
+            let mut conn = client.get_connection().unwrap();
+            let _: () = redis::cmd("FLUSHDB").query(&mut conn).unwrap();
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn connection() {
+        let mut manager = RedisManager::new();
+        assert!(manager.connect(TEST_ID, TEST_REDIS_URI).is_ok());
+        assert!(manager.get_client(TEST_ID).is_some());
+
+        manager.disconnect(TEST_ID);
+        assert!(manager.get_client(TEST_ID).is_none());
+    }
+
+    #[test]
+    #[serial]
+    fn set_get_string() {
+        let manager = setup();
+
+        assert!(manager.set_key(TEST_ID, "test_key", "test_value").is_ok());
+
+        let info = manager.get_key_info(TEST_ID, "test_key").unwrap().unwrap();
+        assert_eq!(info.key, "test_key");
+        assert_eq!(info.value, "test_value");
+        assert_eq!(info.data_type, "string");
+
+        cleanup(&manager);
+    }
+
+    #[test]
+    #[serial]
+    fn ttl() {
+        let manager = setup();
+
+        manager.set_key(TEST_ID, "ttl_key", "value").unwrap();
+        manager.set_ttl(TEST_ID, "ttl_key", 100).unwrap();
+
+        let info = manager.get_key_info(TEST_ID, "ttl_key").unwrap().unwrap();
+        assert!(info.ttl > 0 && info.ttl <= 100);
+
+        manager.set_ttl(TEST_ID, "ttl_key", -1).unwrap();
+        let info = manager.get_key_info(TEST_ID, "ttl_key").unwrap().unwrap();
+        assert_eq!(info.ttl, -1);
+
+        cleanup(&manager);
+    }
+
+    #[test]
+    #[serial]
+    fn delete_key() {
+        let manager = setup();
+
+        manager.set_key(TEST_ID, "delete_key", "value").unwrap();
+        assert!(manager
+            .get_key_info(TEST_ID, "delete_key")
+            .unwrap()
+            .is_some());
+
+        manager.delete_key(TEST_ID, "delete_key").unwrap();
+        assert!(manager
+            .get_key_info(TEST_ID, "delete_key")
+            .unwrap()
+            .is_none());
+
+        cleanup(&manager);
+    }
+
+    #[test]
+    #[serial]
+    fn get_keys() {
+        let manager = setup();
+
+        manager.set_key(TEST_ID, "key1", "value1").unwrap();
+        manager.set_key(TEST_ID, "key2", "value2").unwrap();
+
+        let keys = manager.get_keys(TEST_ID, "key*").unwrap();
+        assert_eq!(keys.len(), 2);
+        assert!(keys.contains(&"key1".to_string()));
+        assert!(keys.contains(&"key2".to_string()));
+
+        cleanup(&manager);
+    }
+
+    #[test]
+    #[serial]
+    fn complex_types() {
+        let manager = setup();
+        let mut conn = manager
+            .get_client(TEST_ID)
+            .unwrap()
+            .get_connection()
+            .unwrap();
+
+        let _: () = conn.lpush("list_key", &["value1", "value2"]).unwrap();
+        let info = manager.get_key_info(TEST_ID, "list_key").unwrap().unwrap();
+        assert_eq!(info.data_type, "list");
+        assert!(info.value.contains("value1"));
+        assert!(info.value.contains("value2"));
+
+        let _: () = conn.sadd("set_key", &["value1", "value2"]).unwrap();
+        let info = manager.get_key_info(TEST_ID, "set_key").unwrap().unwrap();
+        assert_eq!(info.data_type, "set");
+        assert!(info.value.contains("value1"));
+        assert!(info.value.contains("value2"));
+
+        let _: () = conn.hset("hash_key", "field1", "value1").unwrap();
+        let info = manager.get_key_info(TEST_ID, "hash_key").unwrap().unwrap();
+        assert_eq!(info.data_type, "hash");
+        assert!(info.value.contains("field1"));
+        assert!(info.value.contains("value1"));
+
+        cleanup(&manager);
+    }
+}
