@@ -1,13 +1,14 @@
 import "./index.css";
-import Layout from "@/components/layout";
 import { ThemeProvider } from "@/components/theme-provider";
+import { RouterProvider } from "react-router-dom";
+import { Toaster } from "./components/ui/toaster";
+import { router } from "./routes";
 
 function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <Layout>
-        <></>
-      </Layout>
+      <RouterProvider router={router} />
+      <Toaster />
     </ThemeProvider>
   );
 }

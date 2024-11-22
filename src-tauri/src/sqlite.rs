@@ -5,7 +5,6 @@ use serde::{de::DeserializeOwned, Serialize};
 
 #[derive(Default)]
 pub struct SqliteManager {
-    pub app_prefix: String,
     pub path: String,
 }
 
@@ -18,7 +17,6 @@ pub trait Entity: Serialize + DeserializeOwned + Debug {
 impl SqliteManager {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         let manager = Self {
-            app_prefix: "testing".to_string(),
             path: "./data/app.db".to_string(),
         };
 

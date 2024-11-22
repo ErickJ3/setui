@@ -14,7 +14,8 @@
       {
         "title": "SetUI",
         "width": 1340,
-        "height": 768
+        "height": 768,
+        "devtools": false
       }
     ],
     "security": {
