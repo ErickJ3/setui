@@ -1,6 +1,6 @@
 use redis::{Client, Commands, Connection as RedisConnection, RedisError, RedisResult};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Default)]
 pub struct RedisManager {
@@ -43,7 +43,28 @@ impl RedisManager {
             "Connection not found",
         )))?;
         let mut conn = client.get_connection()?;
-        conn.keys(pattern)
+
+        let mut cursor = 0;
+        let mut keys = HashSet::new();
+
+        loop {
+            let (next_cursor, mut batch): (i64, Vec<String>) = redis::cmd("SCAN")
+                .arg(cursor)
+                .arg("MATCH")
+                .arg(pattern)
+                .arg("COUNT")
+                .arg(100)
+                .query(&mut conn)?;
+
+            keys.extend(batch.drain(..));
+            cursor = next_cursor;
+
+            if cursor == 0 {
+                break;
+            }
+        }
+
+        Ok(keys.into_iter().collect())
     }
 
     pub fn get_key_info(&self, id: i64, key: &str) -> RedisResult<Option<RedisKeyValue>> {
