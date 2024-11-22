@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import Layout from "@/components/layout";
 import { HomePage } from "@/pages/home";
-import KeyView from "@/features/keys/components/key-view";
+import KeyView from "@/features/keys/key-view";
 
 export const router = createBrowserRouter([
   {

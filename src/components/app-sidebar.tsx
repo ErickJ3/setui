@@ -9,12 +9,12 @@ import {
 } from "@/components/ui/sidebar";
 import Typography from "./typography";
 import { Separator } from "./ui/separator";
-import CreateConnection from "@/features/new-connection/components/create-connection";
 import { Loader2, RotateCw } from "lucide-react";
-import { ConnectionItem } from "./connection-item";
+import { ConnectionItem } from "../features/connection/item-connection";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
+import CreateConnection from "@/features/connection/create-connection";
 
 export function AppSidebar() {
   const { connections, isLoading, fetchConnections, refreshConnections } =

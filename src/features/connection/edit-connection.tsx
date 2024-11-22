@@ -1,10 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { invoke } from "@tauri-apps/api/core";
 import { useState } from "react";
-import { Plus, Loader2 } from "lucide-react";
-
+import { Loader2 } from "lucide-react";
 import Typography from "@/components/typography";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +10,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -33,43 +29,31 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useConnectionStore } from "@/store/connection";
+import { Connection, useConnectionStore } from "@/store/connection";
+import { ConnectionFormData, connectionSchema } from "./schema";
+import { COLORS } from "./constants";
 
-const connectionSchema = z.object({
-  uri: z
-    .string()
-    .min(1, "URI is required")
-    .refine(
-      (uri) => uri.startsWith("redis://") || uri.startsWith("rediss://"),
-      "URI must start with redis:// or rediss://"
-    ),
-  name: z.string().min(1, "Name is required"),
-  color: z.string().min(1, "Color is required"),
-});
+interface EditConnectionProps {
+  connection: Connection;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
 
-type ConnectionFormData = z.infer<typeof connectionSchema>;
-
-const COLORS = [
-  { label: "Red", value: "red" },
-  { label: "Blue", value: "blue" },
-  { label: "Green", value: "green" },
-  { label: "Purple", value: "purple" },
-  { label: "Orange", value: "orange" },
-  { label: "Pink", value: "pink" },
-];
-
-const CreateConnection = () => {
-  const [open, setOpen] = useState(false);
+const EditConnection = ({
+  connection,
+  open,
+  onOpenChange,
+}: EditConnectionProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { fetchConnections } = useConnectionStore();
+  const { updateConnection, refreshConnections } = useConnectionStore();
 
   const form = useForm<ConnectionFormData>({
     resolver: zodResolver(connectionSchema),
     defaultValues: {
-      uri: "",
-      name: "",
-      color: "",
+      uri: connection.uri_connection,
+      name: connection.name,
+      color: connection.color,
     },
   });
 
@@ -77,28 +61,25 @@ const CreateConnection = () => {
     try {
       setIsSubmitting(true);
 
-      const connectionId = await invoke("create_connection", {
-        uri: data.uri,
+      const updatedConnection: Connection = {
+        id: connection.id,
+        uri_connection: data.uri,
         name: data.name,
         color: data.color,
-      });
+      };
 
-      await invoke("connect_redis", {
-        id: connectionId,
-        uri: data.uri,
-      });
-
-      await fetchConnections();
+      await updateConnection(updatedConnection);
+      await refreshConnections();
 
       toast({
         title: "Success",
-        description: "Connection created successfully",
+        description: "Connection updated successfully",
       });
 
-      setOpen(false);
-      form.reset();
+      onOpenChange(false);
+      form.reset(data);
     } catch (error) {
-      console.error("Connection error:", error);
+      console.error("Update error:", error);
       toast({
         title: "Error",
         description: error as string,
@@ -110,22 +91,11 @@ const CreateConnection = () => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="rounded-full hover:bg-primary/10"
-        >
-          <Plus className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
-
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">
-            New Redis Connection
+            Edit Redis Connection
           </DialogTitle>
         </DialogHeader>
 
@@ -218,7 +188,7 @@ const CreateConnection = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={() => onOpenChange(false)}
               >
                 Cancel
               </Button>
@@ -226,11 +196,11 @@ const CreateConnection = () => {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Connecting...
+                    Updating...
                   </>
                 ) : (
                   <Typography.P className="font-semibold">
-                    Create Connection
+                    Save Changes
                   </Typography.P>
                 )}
               </Button>
@@ -242,4 +212,4 @@ const CreateConnection = () => {
   );
 };
 
-export default CreateConnection;
+export default EditConnection;
