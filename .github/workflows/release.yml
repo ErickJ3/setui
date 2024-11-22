@@ -7,7 +7,35 @@ on:
       - "v*"
 
 jobs:
-  build-and-release:
+  create-release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        id: get-version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          else
+            node -p "require('./package.json').version" > version.txt
+            echo "version=$(cat version.txt)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/') != true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          gh release create "v$VERSION" --draft --title "v$VERSION" --notes "Release v$VERSION"
+
+  build:
+    needs: create-release
     permissions:
       contents: write
     strategy:
@@ -61,21 +89,13 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install
 
-      - name: Generate version
-        if: startsWith(github.ref, 'refs/heads/')
-        run: echo "VERSION=$(date +'%Y%m%d%H%M')" >> $GITHUB_ENV
-
-      - name: Set version from tag
-        if: startsWith(github.ref, 'refs/tags/')
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
-
       - name: Build the app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v${{ env.VERSION }}
-          releaseName: "Setui v${{ env.VERSION }}"
-          releaseBody: "Auto release from ${{ github.ref_name }}"
-          releaseDraft: false
-          prerelease: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          tagName: v${{ needs.create-release.outputs.version }}
+          releaseName: "App v${{ needs.create-release.outputs.version }}"
+          releaseBody: "Release v${{ needs.create-release.outputs.version }}"
+          releaseDraft: true
+          prerelease: false
