@@ -1,6 +1,8 @@
 name: Release
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*"
 
@@ -58,13 +60,21 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install
 
+      - name: Generate version
+        if: startsWith(github.ref, 'refs/heads/')
+        run: echo "VERSION=$(date +'%Y%m%d%H%M')" >> $GITHUB_ENV
+
+      - name: Set version from tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
       - name: Build the app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "Setui v${{ github.ref_name }}"
-          releaseBody: "See the release assets for your platform"
+          tagName: v${{ env.VERSION }}
+          releaseName: "Setui v${{ env.VERSION }}"
+          releaseBody: "Auto release from ${{ github.ref_name }}"
           releaseDraft: false
-          prerelease: false
+          prerelease: ${{ !startsWith(github.ref, 'refs/tags/') }}
