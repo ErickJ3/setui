@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Save, Trash, Clock } from "lucide-react";
+import { Loader2, Save, Trash, Clock, Copy, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
 
 function KeyView() {
@@ -30,6 +35,7 @@ function KeyView() {
   const [ttlDialogOpen, setTtlDialogOpen] = useState(false);
   const [newTtl, setNewTtl] = useState("");
   const [editedValue, setEditedValue] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const { selectedKey, getKeyInfo, setKeyValue, deleteKey, setKeyTTL } =
     useConnectionStore();
@@ -39,6 +45,18 @@ function KeyView() {
       loadKeyInfo();
     }
   }, [connectionId, keyName]);
+
+  const handleCopy = async () => {
+    if (keyName) {
+      await navigator.clipboard.writeText(keyName);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast({
+        title: "Copied!",
+        description: "Key name copied to clipboard",
+      });
+    }
+  };
 
   const loadKeyInfo = async () => {
     try {
@@ -127,15 +145,38 @@ function KeyView() {
     );
   }
 
+  console.log(selectedKey);
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <Card>
         <CardHeader>
           <div className="flex justify-between items-start select-none">
             <div>
-              <CardTitle className="text-2xl">{keyName}</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-2xl">{keyName}</CardTitle>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={handleCopy}
+                    >
+                      {copied ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Copy key name</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
               <CardDescription>
-                Type: {selectedKey.type} | TTL:{" "}
+                Type: {selectedKey.data_type} | TTL:{" "}
                 {selectedKey.ttl === -1
                   ? "No expiration"
                   : `${selectedKey.ttl}s`}

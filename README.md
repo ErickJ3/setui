@@ -2,9 +2,9 @@
 
 A modern, fast, and user-friendly Redis GUI client built with Tauri, React, and Rust.
 
+![Key View](docs/screenshot-03.png)
 ![Home Screen](docs/screenshot-02.png)
 ![Edit Connection](docs/screenshot-01.png)
-![Key View](docs/screenshot-03.png)
 
 ## Features
 

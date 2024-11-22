@@ -142,7 +142,7 @@ export function ConnectionItem({ connection }: { connection: Connection }) {
                 onClick={() => handleKeyClick(key)}
               >
                 <Key className="h-3 w-3" />
-                <span>{key}</span>
+                <span>{truncateText(key, 16)}</span>
               </Button>
             ))
           )}

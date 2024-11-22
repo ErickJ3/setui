@@ -13,7 +13,7 @@ export interface RedisKeyInfo {
   key: string;
   value: string;
   ttl: number;
-  type: string;
+  data_type: string;
 }
 
 interface ConnectionState {
