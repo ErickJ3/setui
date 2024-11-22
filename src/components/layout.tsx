@@ -19,7 +19,7 @@ export default function Layout() {
 
   return (
     <SidebarProvider>
-      <div className="h-screen w-screen overflow-hidden flex">
+      <div className="h-screen w-screen overflow-hidden flex select-none">
         <AppSidebar />
         <main
           className={cn(

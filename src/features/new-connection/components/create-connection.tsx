@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useConnectionStore } from "@/store/connection";
 
 const connectionSchema = z.object({
   uri: z
@@ -61,6 +62,7 @@ const CreateConnection = () => {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { fetchConnections } = useConnectionStore();
 
   const form = useForm<ConnectionFormData>({
     resolver: zodResolver(connectionSchema),
@@ -85,6 +87,8 @@ const CreateConnection = () => {
         id: connectionId,
         uri: data.uri,
       });
+
+      await fetchConnections();
 
       toast({
         title: "Success",

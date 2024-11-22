@@ -39,14 +39,27 @@ impl SqliteManager {
 
     pub fn insert<T: Entity>(&self, entity: &T) -> SqliteResult<i64> {
         let conn = self.connect()?;
-        let serialized = serde_json::to_string(entity).unwrap();
 
+        let serialized = serde_json::to_string(entity).unwrap();
         conn.execute(
             &format!("INSERT INTO {} (data) VALUES (?)", T::get_table_name()),
             params![serialized],
         )?;
 
-        Ok(conn.last_insert_rowid())
+        let id = conn.last_insert_rowid();
+
+        let mut json_value: serde_json::Value = serde_json::from_str(&serialized).unwrap();
+        if let Some(obj) = json_value.as_object_mut() {
+            obj["id"] = serde_json::Value::Number(serde_json::Number::from(id));
+        }
+        let updated_serialized = json_value.to_string();
+
+        conn.execute(
+            &format!("UPDATE {} SET data = ? WHERE id = ?", T::get_table_name()),
+            params![updated_serialized, id],
+        )?;
+
+        Ok(id)
     }
 
     pub fn get_by_id<T: Entity>(&self, id: i64) -> SqliteResult<Option<T>> {
@@ -91,12 +104,19 @@ impl SqliteManager {
 
     pub fn list<T: Entity>(&self) -> SqliteResult<Vec<T>> {
         let conn = self.connect()?;
-        let mut stmt = conn.prepare(&format!("SELECT data FROM {}", T::get_table_name()))?;
+        let mut stmt = conn.prepare(&format!("SELECT id, data FROM {}", T::get_table_name()))?;
 
         let entities = stmt
             .query_map([], |row| {
-                let data: String = row.get(0)?;
-                let entity: T = serde_json::from_str(&data).unwrap();
+                let id: i64 = row.get(0)?;
+                let data: String = row.get(1)?;
+                let mut json_value: serde_json::Value = serde_json::from_str(&data).unwrap();
+                if let Some(obj) = json_value.as_object_mut() {
+                    if obj["id"] != serde_json::Value::Number(serde_json::Number::from(id)) {
+                        obj["id"] = serde_json::Value::Number(serde_json::Number::from(id));
+                    }
+                }
+                let entity: T = serde_json::from_value(json_value).unwrap();
                 Ok(entity)
             })?
             .filter_map(Result::ok)

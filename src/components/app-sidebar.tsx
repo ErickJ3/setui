@@ -88,7 +88,7 @@ export function AppSidebar() {
             </Typography.P>
           </div>
         ) : (
-          <div className="space-y-1 p-2">
+          <div className="space-y-1 p-2 select-none">
             {connections.map((connection) => (
               <ConnectionItem key={connection.id} connection={connection} />
             ))}
