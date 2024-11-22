@@ -96,7 +96,7 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="p-4 select-none">
         <Typography.P className="text-xs text-muted-foreground text-center">
           Version {AppManifest.version}
         </Typography.P>
