@@ -1,5 +1,3 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-
 use log::error;
 use ob::Connection;
 use sqlite::SqliteManager;
@@ -50,6 +48,33 @@ fn get_connection(app_handler: tauri::AppHandle, id: i64) -> Result<Option<Conne
         .map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn update_connection(app_handler: tauri::AppHandle, entity: Connection) -> Result<(), String> {
+    let state = app_handler.state::<AppState>();
+
+    state
+        .sqlite_manager
+        .update(&entity)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_connection(app_handler: tauri::AppHandle, id: i64) -> Result<(), String> {
+    let state = app_handler.state::<AppState>();
+
+    state
+        .sqlite_manager
+        .delete::<Connection>(id)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn list_connection(app_handler: tauri::AppHandle) -> Result<Vec<Connection>, String> {
+    let state = app_handler.state::<AppState>();
+
+    state.sqlite_manager.list().map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let sqlite_manager = SqliteManager::new().unwrap();
@@ -62,7 +87,13 @@ pub fn run() {
     tauri::Builder::default()
         .manage(AppState { sqlite_manager })
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![create_connection, get_connection])
+        .invoke_handler(tauri::generate_handler![
+            create_connection,
+            get_connection,
+            update_connection,
+            delete_connection,
+            list_connection
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
