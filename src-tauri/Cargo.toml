@@ -1,16 +1,11 @@
 [package]
 name = "setui"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "A the best ui for redis in react + rust!"
+authors = ["Erick <erick.jesus2060@gmail.com>"]
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [lib]
-# The `_lib` suffix may seem redundant but it is necessary
-# to make the lib name unique and wouldn't conflict with the bin name.
-# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
 name = "setui_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
@@ -25,3 +20,6 @@ serde_json = "1"
 rusqlite = { version = "0.32.0", features = ["bundled"] }
 log = "0.4.22"
 redis = "0.27.5"
+
+[dev-dependencies]
+serial_test = "3.2.0"

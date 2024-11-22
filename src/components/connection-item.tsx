@@ -74,7 +74,7 @@ export function ConnectionItem({ connection }: { connection: Connection }) {
       </Button>
 
       {isExpanded && (
-        <div className="pl-9 space-y-0.5">
+        <div className="pl-9 space-y-0.5 select-none">
           {keys.length === 0 ? (
             <Typography.P className="text-xs text-muted-foreground py-1 px-2">
               No keys found

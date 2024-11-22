@@ -88,7 +88,7 @@ export function AppSidebar() {
             </Typography.P>
           </div>
         ) : (
-          <div className="space-y-1 p-2">
+          <div className="space-y-1 p-2 select-none">
             {connections.map((connection) => (
               <ConnectionItem key={connection.id} connection={connection} />
             ))}
@@ -96,7 +96,7 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="p-4 select-none">
         <Typography.P className="text-xs text-muted-foreground text-center">
           Version {AppManifest.version}
         </Typography.P>
