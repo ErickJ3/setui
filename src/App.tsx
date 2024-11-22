@@ -1,11 +1,14 @@
-import { Button } from "@/components/ui/button";
 import "./index.css";
+import Layout from "@/components/layout";
+import { ThemeProvider } from "@/components/theme-provider";
 
 function App() {
   return (
-    <div className="p-10">
-      <Button>Click button</Button>
-    </div>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <Layout>
+        <></>
+      </Layout>
+    </ThemeProvider>
   );
 }
 

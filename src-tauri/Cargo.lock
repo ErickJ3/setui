@@ -2992,6 +2992,7 @@ dependencies = [
 name = "setui"
 version = "0.1.0"
 dependencies = [
+ "log",
  "rusqlite",
  "serde",
  "serde_json",
