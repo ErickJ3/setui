@@ -1,7 +1,7 @@
 [package]
 name = "setui"
-version = "0.1.0"
-description = "A the best ui for redis in react + rust!"
+version = "0.0.5"
+description = "A simple ui for redis in tauri"
 authors = ["Erick <erick.jesus2060@gmail.com>"]
 edition = "2021"
 
