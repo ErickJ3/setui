@@ -75,7 +75,7 @@ export const KeyContent = ({
               <JsonView
                 value={parsedJson}
                 displayDataTypes={false}
-                style={customColorForJson}
+                style={customColorForJson as any}
               />
             </div>
           )}
