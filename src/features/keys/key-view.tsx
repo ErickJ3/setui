@@ -1,42 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useConnectionStore } from "@/store/connection";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Loader2, Save, Trash, Clock, Copy, Check } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { KeyHeader } from "./key-header";
+import { KeyContent } from "./key-content";
+import { Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-function KeyView() {
+const KeyView = () => {
   const { connectionId, keyName } = useParams();
   const [isLoading, setIsLoading] = useState(false);
-  const [ttlDialogOpen, setTtlDialogOpen] = useState(false);
-  const [newTtl, setNewTtl] = useState("");
   const [editedValue, setEditedValue] = useState("");
-  const [copied, setCopied] = useState(false);
-
   const { selectedKey, getKeyInfo, setKeyValue, deleteKey, setKeyTTL } =
     useConnectionStore();
 
@@ -45,18 +18,6 @@ function KeyView() {
       loadKeyInfo();
     }
   }, [connectionId, keyName]);
-
-  const handleCopy = async () => {
-    if (keyName) {
-      await navigator.clipboard.writeText(keyName);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      toast({
-        title: "Copied!",
-        description: "Key name copied to clipboard",
-      });
-    }
-  };
 
   const loadKeyInfo = async () => {
     try {
@@ -75,14 +36,10 @@ function KeyView() {
 
   const handleSave = async () => {
     if (!connectionId || !keyName || !editedValue) return;
-
     try {
       setIsLoading(true);
       await setKeyValue(Number(connectionId), keyName, editedValue);
-      toast({
-        title: "Success",
-        description: "Value updated successfully",
-      });
+      toast({ title: "Success", description: "Value updated successfully" });
     } catch (error) {
       toast({
         title: "Error",
@@ -96,7 +53,6 @@ function KeyView() {
 
   const handleDelete = async () => {
     if (!connectionId || !keyName) return;
-
     try {
       setIsLoading(true);
       await deleteKey(Number(connectionId), keyName);
@@ -112,14 +68,10 @@ function KeyView() {
     }
   };
 
-  const handleTtlUpdate = async () => {
+  const handleTtlUpdate = async (ttl: number) => {
     if (!connectionId || !keyName) return;
-
     try {
-      const ttl = parseInt(newTtl);
       await setKeyTTL(Number(connectionId), keyName, ttl);
-      setTtlDialogOpen(false);
-      setNewTtl("");
     } catch (error) {
       toast({
         title: "Error",
@@ -145,112 +97,23 @@ function KeyView() {
     );
   }
 
-  console.log(selectedKey);
-
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start select-none">
-            <div>
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-2xl">{keyName}</CardTitle>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={handleCopy}
-                    >
-                      {copied ? (
-                        <Check className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <Copy className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Copy key name</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <CardDescription>
-                Type: {selectedKey.data_type} | TTL:{" "}
-                {selectedKey.ttl === -1
-                  ? "No expiration"
-                  : `${selectedKey.ttl}s`}
-              </CardDescription>
-            </div>
-
-            <div className="flex gap-2">
-              <Dialog open={ttlDialogOpen} onOpenChange={setTtlDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Clock className="h-4 w-4 mr-2" />
-                    Set TTL
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Set Time To Live</DialogTitle>
-                    <DialogDescription>
-                      Set the expiration time in seconds. Use -1 for no
-                      expiration.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="py-4">
-                    <Label htmlFor="ttl">TTL (seconds)</Label>
-                    <Input
-                      id="ttl"
-                      value={newTtl}
-                      onChange={(e) => setNewTtl(e.target.value)}
-                      type="number"
-                      placeholder="Enter TTL in seconds"
-                    />
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => setTtlDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button onClick={handleTtlUpdate}>Save</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-
-              <Button variant="outline" size="sm" onClick={handleDelete}>
-                <Trash className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Value</Label>
-              <Textarea
-                value={editedValue || selectedKey.value}
-                onChange={(e) => setEditedValue(e.target.value)}
-                className="min-h-[200px] font-mono"
-              />
-            </div>
-
-            <div className="flex justify-end">
-              <Button onClick={handleSave} disabled={!editedValue}>
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <KeyHeader
+        keyName={keyName!}
+        keyType={selectedKey.data_type}
+        ttl={selectedKey.ttl}
+        onDelete={handleDelete}
+        onTtlUpdate={handleTtlUpdate}
+      />
+      <KeyContent
+        value={selectedKey.value}
+        editedValue={editedValue}
+        onValueChange={setEditedValue}
+        onSave={handleSave}
+      />
     </div>
   );
-}
+};
 
 export default KeyView;
