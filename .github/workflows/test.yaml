@@ -59,10 +59,3 @@ jobs:
         run: |
           cd src-tauri
           cargo test
-
-      - name: Upload Rust coverage reports
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./src-tauri/target/coverage/*.json
-          fail_ci_if_error: true
-          flags: backend
