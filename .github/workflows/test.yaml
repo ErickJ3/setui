@@ -55,13 +55,6 @@ jobs:
       - name: Run frontend tests
         run: pnpm test:coverage
 
-      - name: Upload frontend coverage reports
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./coverage/coverage-final.json
-          fail_ci_if_error: true
-          flags: frontend
-
       - name: Run Rust tests
         run: |
           cd src-tauri
