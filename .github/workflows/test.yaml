@@ -1,9 +1,7 @@
 name: Test
 on:
-  push:
-    branches: [develop, main]
   pull_request:
-    branches: [develop, main]
+    branches: [main]
 
 jobs:
   test:
@@ -54,7 +52,24 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install
 
-      - name: Run tests
+      - name: Run frontend tests
+        run: pnpm test:coverage
+
+      - name: Upload frontend coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/coverage-final.json
+          fail_ci_if_error: true
+          flags: frontend
+
+      - name: Run Rust tests
         run: |
           cd src-tauri
           cargo test
+
+      - name: Upload Rust coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./src-tauri/target/coverage/*.json
+          fail_ci_if_error: true
+          flags: backend
